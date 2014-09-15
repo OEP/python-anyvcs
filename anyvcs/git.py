@@ -169,6 +169,8 @@ class GitRepo(VCSRepo):
                 entry.type = 'l'
                 if 'target' in report:
                     entry.target = self._cat(rev, ename).decode(self.encoding, 'replace')
+            elif mode == 0o160000:
+                entry.type = 's'
             else:
                 assert False, 'unexpected output: ' + str(line)
             results.append(entry)
