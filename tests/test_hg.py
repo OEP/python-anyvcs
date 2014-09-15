@@ -177,5 +177,16 @@ class HgCopyTest(HgTest, common.CopyTest):
     pass
 
 
+class HgSubmoduleTest(HgTest, common.SubmoduleTest):
+    def test_ls1(self):
+        result = common.normalize_ls(self.repo.ls(self.working_head, '/'))
+        expected = common.normalize_ls([
+            {'path': '.hgsub', 'type': 'f', 'name': '.hgsub'},
+            {'path': '.hgsubstate', 'type': 'f', 'name': '.hgsubstate'},
+            {'path': 'cats.txt', 'type': 'f', 'name': 'cats.txt'},
+        ])
+        self.assertEqual(expected, result)
+
+
 if __name__ == "__main__":
     common.unittest.main()

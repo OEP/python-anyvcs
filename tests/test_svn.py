@@ -533,5 +533,12 @@ class SvnHeadRevTest(SvnTest):
         self.assertTrue(len(diff) > 0)
 
 
+class SvnSubmoduleTest(SvnTest, common.SubmoduleTest):
+    def test_propget1(self):
+        result = self.repo.propget('svn:externals', self.rev1, '/')
+        expected = 'submodule file://%s\n' % self.main_path
+        self.assertEqual(expected, result)
+
+
 if __name__ == "__main__":
     common.unittest.main()
