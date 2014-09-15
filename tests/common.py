@@ -428,10 +428,20 @@ class AddSubmodule(Action):
         time.sleep(1)  # git has a 1 second granularity, this keeps logs in order
 
     def doHg(self, test):
-        raise NotImplementedError # TODO: Next feature release.
+        path = os.path.join(test.working_path, '.hgsub')
+        with open(path, 'a') as fp:
+            fp.write('%s = %s\n' % (self.path, self.repository))
+        test.check_call(['hg', 'add', '.hgsub'])
+        test.check_call(['hg', 'commit', '-m', 'add submodule %s' % self.path])
+        test.check_call(['hg', 'push'])
 
     def doSvn(self, test):
-        raise NotImplementedError # TODO: Next feature release.
+        externals = test.check_output(['svn', 'propget', 'svn:externals', '.'])
+        externals = externals.splitlines()
+        externals.append('%s %s' % (self.path, 'file://' + self.repository))
+        externals = '\n'.join(externals)
+        test.check_call(['svn', 'propset', 'svn:externals', externals, '.'])
+        test.check_call(['svn', 'commit', '-m', 'add submodule %s' % self.path])
 
 ### TEST CASE: EmptyTest ###
 
@@ -1952,12 +1962,12 @@ class SubmoduleTest(object):
         touch(os.path.join(working_path, 'cats.txt'), 'Shadow')
         yield Commit('Start a list of cats')
         yield AddSubmodule(cls.main_path, 'submodule')
+        cls.rev1 = cls.getAbsoluteRev()
 
     def test_ls1(self):
         result = normalize_ls(self.repo.ls(self.working_head, '/'))
         expected = normalize_ls([
             {'path': 'cats.txt', 'type': 'f', 'name': 'cats.txt'},
-            {'path': 'submodule', 'type': 's', 'name': 'submodule'},
         ])
         self.assertEqual(expected, result)
 
