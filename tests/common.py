@@ -409,6 +409,30 @@ class Bookmark(Action):
         pass
 
 
+class AddSubmodule(Action):
+    """Add a repository submodule."""
+
+    def __init__(self, repository, path, name=None):
+        self.path = path
+        self.repository = repository
+        self.name = name
+
+    def doGit(self, test):
+        cmd = ['git', 'submodule', 'add', self.repository, self.path]
+        if not self.name is None:
+            cmd.extend(['--name', self.name])
+        test.check_call(cmd)
+        cmd = ['git', 'commit', '-m', 'add submodule %s' % self.path]
+        test.check_call(cmd)
+        test.check_call(['git', 'push', '--set-upstream', 'origin', test.working_head])
+        time.sleep(1)  # git has a 1 second granularity, this keeps logs in order
+
+    def doHg(self, test):
+        raise NotImplementedError # TODO: Next feature release.
+
+    def doSvn(self, test):
+        raise NotImplementedError # TODO: Next feature release.
+
 ### TEST CASE: EmptyTest ###
 
 class EmptyTest(object):
@@ -1916,6 +1940,25 @@ class EmptyCommitTest(object):
         result = self.repo.pdiff(self.rev2)
         expected = ''
         self.assertIsInstance(expected, string_types)
+        self.assertEqual(expected, result)
+
+
+### TEST CASE: SubmoduleTest ###
+
+
+class SubmoduleTest(object):
+    @classmethod
+    def setUpWorkingCopy(cls, working_path):
+        touch(os.path.join(working_path, 'cats.txt'), 'Shadow')
+        yield Commit('Start a list of cats')
+        yield AddSubmodule(cls.main_path, 'submodule')
+
+    def test_ls1(self):
+        result = normalize_ls(self.repo.ls(self.working_head, '/'))
+        expected = normalize_ls([
+            {'path': 'cats.txt', 'type': 'f', 'name': 'cats.txt'},
+            {'path': 'submodule', 'type': 's', 'name': 'submodule'},
+        ])
         self.assertEqual(expected, result)
 
 

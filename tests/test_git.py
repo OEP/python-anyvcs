@@ -166,5 +166,16 @@ class GitEmptyCommitTest(GitTest, common.EmptyCommitTest):
     pass
 
 
+class GitSubmoduleTest(GitTest, common.SubmoduleTest):
+    def test_ls1(self):
+        result = common.normalize_ls(self.repo.ls(self.working_head, '/'))
+        expected = common.normalize_ls([
+            {'path': '.gitmodules', 'type': 'f', 'name': '.gitmodules'},
+            {'path': 'cats.txt', 'type': 'f', 'name': 'cats.txt'},
+            {'path': 'submodule', 'type': 's', 'name': 'submodule'},
+        ])
+        self.assertEqual(expected, result)
+
+
 if __name__ == "__main__":
     common.unittest.main()
