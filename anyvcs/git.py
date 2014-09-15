@@ -170,7 +170,7 @@ class GitRepo(VCSRepo):
                 if 'target' in report:
                     entry.target = self._cat(rev, ename).decode(self.encoding, 'replace')
             elif mode == 0o160000:
-                entry.type = 's'
+                continue
             else:
                 assert False, 'unexpected output: ' + str(line)
             results.append(entry)
