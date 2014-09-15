@@ -172,7 +172,6 @@ class GitSubmoduleTest(GitTest, common.SubmoduleTest):
         expected = common.normalize_ls([
             {'path': '.gitmodules', 'type': 'f', 'name': '.gitmodules'},
             {'path': 'cats.txt', 'type': 'f', 'name': 'cats.txt'},
-            {'path': 'submodule', 'type': 's', 'name': 'submodule'},
         ])
         self.assertEqual(expected, result)
 
