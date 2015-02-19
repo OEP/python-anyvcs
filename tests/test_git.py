@@ -66,7 +66,17 @@ class GitTest(common.VCSTest):
             raise subprocess.CalledProcessError(p.returncode, cmd2)
 
 
-class GitEmptyTest(GitTest, common.EmptyTest):
+class GitWorkingCopyTest(GitTest):
+
+    @classmethod
+    def setUpRepos(cls):
+        super(GitWorkingCopyTest, cls).setUpRepos()
+        cls.repo = anyvcs.open(cls.working_path)
+
+
+### EMPTY TEST ###
+
+class EmptyTest(common.EmptyTest):
     def test_branches(self):
         result = self.repo.branches()
         correct = []
@@ -87,19 +97,43 @@ class GitEmptyTest(GitTest, common.EmptyTest):
         self.assertEqual(len(result), 0)
 
 
+class GitEmptyTest(GitWorkingCopyTest, EmptyTest):
+    pass
+
+
+class GitWorkingCopyEmptyTest(GitWorkingCopyTest, EmptyTest):
+    pass
+
+
+### EMPTY WITH COMMITS TEST ###
+
 class GitEmptyWithCommitsTest(GitTest, common.EmptyWithCommitsTest):
     pass
 
+
+class GitWorkingCopyEmptyWithCommitsTest(GitWorkingCopyTest, common.EmptyWithCommitsTest):
+    pass
+
+
+### MISMATCHED FILE TYPE TEST ###
 
 class GitMismatchedFileTypeTest(GitTest, common.MismatchedFileTypeTest):
     pass
 
 
+class GitWorkingCopyMismatchedFileTypeTest(GitWorkingCopyTest, common.MismatchedFileTypeTest):
+    pass
+
+
+### EMPTY MAIN BRANCH TEST ###
+
 class GitEmptyMainBranchTest(GitTest, common.EmptyMainBranchTest):
     pass
 
 
-class GitBasicTest(GitTest, common.GitLikeBasicTest):
+### BASIC TEST ###
+
+class BasicTest(common.GitLikeBasicTest):
     def test_branches(self):
         result = self.repo.branches()
         correct = ['master']
@@ -116,34 +150,88 @@ class GitBasicTest(GitTest, common.GitLikeBasicTest):
         self.assertEqual(common.normalize_heads(correct), common.normalize_heads(result))
 
 
+class GitBasicTest(GitTest, BasicTest):
+    pass
+
+
+class GitWorkingCopyBasicTest(GitWorkingCopyTest, BasicTest):
+    pass
+
+
+### UNRELATED BRANCH TEST ###
+
 class GitUnrelatedBranchTest(GitTest, common.UnrelatedBranchTest):
     pass
 
+
+class GitWorkingCopyUnrelatedBranchTest(GitWorkingCopyTest, common.UnrelatedBranchTest):
+    pass
+
+
+### BRANCH TEST STEP 3 ###
 
 class GitBranchTestStep3(GitTest, common.GitLikeBranchTestStep3):
     pass
 
 
+class GitWorkingCopyBranchTestStep3(GitWorkingCopyTest, common.GitLikeBranchTestStep3):
+    pass
+
+
+### BRANCH TEST STEP 7 ###
+
 class GitBranchTestStep7(GitTest, common.GitLikeBranchTestStep7):
     pass
 
+
+class GitWorkingCopyBranchTestStep7(GitWorkingCopyTest, common.GitLikeBranchTestStep7):
+    pass
+
+
+### BRANCH TEST STEP 9 ###
 
 class GitBranchTestStep9(GitTest, common.GitLikeBranchTestStep9):
     pass
 
 
+class GitWorkingCopyBranchTestStep9(GitWorkingCopyTest, common.GitLikeBranchTestStep9):
+    pass
+
+
+### BRANCH TEST STEP 11 ###
+
 class GitBranchTestStep11(GitTest, common.GitLikeBranchTestStep11):
     pass
 
 
-class GitBranchTestStep13(GitTest, common.GitLikeBranchTestStep13):
+class GitWorkingCopyBranchTestStep11(GitWorkingCopyTest, common.GitLikeBranchTestStep11):
+    pass
+
+
+### BRANCH TEST STEP 13 ###
+
+class BranchTestStep13(common.GitLikeBranchTestStep13):
     def test_log_all(self):
         result = [self.revrev[x.rev] for x in self.repo.log()]
         correct = [15, 14, 13, 12, 11, 10, 8, 7, 5, 4, 2]
         self.assertEqual(correct, result)
 
 
+class GitBranchTestStep13(GitTest, BranchTestStep13):
+    pass
+
+
+class GitWorkingCopyBranchTestStep13(GitWorkingCopyTest, BranchTestStep13):
+    pass
+
+
+### CACHE TEST ###
+
 class GitCacheTest(GitTest, common.CacheTest):
+    pass
+
+
+class GitWorkingCopyCacheTest(GitWorkingCopyTest, common.CacheTest):
     pass
 
 
@@ -158,11 +246,23 @@ class GitUTF8EncodingTest(GitTest, common.UTF8EncodingTest):
 #class GitLatin1EncodingTest(GitTest, common.Latin1EncodingTest): pass
 
 
+### COPY TEST ###
+
 class GitCopyTest(GitTest, common.CopyTest):
     pass
 
 
+class GitWorkingCopyCopyTest(GitWorkingCopyTest, common.CopyTest):
+    pass
+
+
+### EMPTY COMMIT TEST ###
+
 class GitEmptyCommitTest(GitTest, common.EmptyCommitTest):
+    pass
+
+
+class GitWorkingCopyEmptyCommitTest(GitWorkingCopyTest, common.EmptyCommitTest):
     pass
 
 
