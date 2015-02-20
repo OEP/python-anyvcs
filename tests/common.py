@@ -577,7 +577,7 @@ class BasicTest(object):
     def test_clone(self):
         destpath = tempfile.mktemp(prefix='anyvcs-test-clone.')
         result = anyvcs.clone(self.repo.path, destpath)
-        self.assertEqual(type(self.repo), type(result))
+        self.assertIsInstance(result, anyvcs.common.VCSRepo)
         self.assertEqual(destpath, result.path)
         commits_expected = frozenset(c.rev for c in self.repo.log())
         commits_actual = frozenset(c.rev for c in result.log())
@@ -589,7 +589,7 @@ class BasicTest(object):
                                 'deep',
                                 'path')
         result = anyvcs.clone(self.repo.path, destpath)
-        self.assertEqual(type(self.repo), type(result))
+        self.assertIsInstance(result, anyvcs.common.VCSRepo)
         self.assertEqual(destpath, result.path)
         self.assertTrue(os.path.exists(result.path))
         shutil.rmtree(destpath)
