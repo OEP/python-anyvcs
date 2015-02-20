@@ -563,4 +563,9 @@ class VCSRepo(object):
         """
         raise NotImplementedError
 
+
+class WorkingCopy(VCSRepo):
+    pass
+
+
 # vi:set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:

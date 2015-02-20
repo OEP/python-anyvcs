@@ -492,4 +492,9 @@ class HgRepo(VCSRepo):
     def tip(self, head):
         return self.canonical_rev(head)
 
+
+class HgWorkingCopy(HgRepo, WorkingCopy):
+    pass
+
+
 # vi:set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:

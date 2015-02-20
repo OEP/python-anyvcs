@@ -395,4 +395,9 @@ class GitRepo(VCSRepo):
     def tip(self, head):
         return self.canonical_rev(head)
 
+
+class GitWorkingCopy(GitRepo, WorkingCopy):
+    pass
+
+
 # vi:set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:

@@ -29,31 +29,34 @@
 from .version import __version__
 
 
-def clone(srcpath, destpath, vcs=None):
+def clone(srcpath, destpath, vcs=None, wc=False):
     """Clone an existing repository.
 
     :param str srcpath: Path to an existing repository
     :param str destpath: Desired path of new repository
     :param str vcs: Either ``git``, ``hg``, or ``svn``
+    :param bool wc: Whether the resulting repo is a working copy.
     :returns VCSRepo: The newly cloned repository
 
     If ``vcs`` is not given, then the repository type is discovered from
     ``srcpath`` via :func:`probe`.
 
     """
-    vcs = vcs or probe(srcpath)
-    cls = _get_repo_class(vcs)
+    vcs, wc = _resolve_guess(srcpath, vcs, wc, False)
+    cls = _get_repo_class(vcs, wc)
     return cls.clone(srcpath, destpath)
 
 
-def create(path, vcs):
+def create(path, vcs, wc=False):
     """Create a new repository
 
     :param str path: The path where to create the repository.
     :param str vcs: Either ``git``, ``hg``, or ``svn``
+    :param bool wc: Whether the resulting repo is a working copy.
 
     """
-    cls = _get_repo_class(vcs)
+    vcs, wc = _resolve_guess(path, vcs, wc, False)
+    cls = _get_repo_class(vcs, wc)
     return cls.create(path)
 
 
@@ -67,36 +70,19 @@ def probe(path):
     This function employs some heuristics to guess the type of the repository.
 
     """
-    import os
-    from .common import UnknownVCSType
-    if os.path.isdir(os.path.join(path, '.git')):
-        return 'git'
-    elif os.path.isdir(os.path.join(path, '.hg')):
-        return 'hg'
-    elif (
-        os.path.isfile(os.path.join(path, 'config')) and
-        os.path.isdir(os.path.join(path, 'objects')) and
-        os.path.isdir(os.path.join(path, 'refs')) and
-        os.path.isdir(os.path.join(path, 'branches'))
-    ):
-        return 'git'
-    elif (
-        os.path.isfile(os.path.join(path, 'format')) and
-        os.path.isdir(os.path.join(path, 'conf')) and
-        os.path.isdir(os.path.join(path, 'db')) and
-        os.path.isdir(os.path.join(path, 'locks'))
-    ):
-        return 'svn'
-    else:
-        raise UnknownVCSType(path)
+    vcs, wc = _probe(path)
+    return vcs
 
 
-def open(path, vcs=None):
+def open(path, vcs=None, wc=None):
     """Open an existing repository
 
     :param str path: The path of the repository
     :param vcs: If specified, assume the given repository type to avoid
                 auto-detection. Either ``git``, ``hg``, or ``svn``.
+    :param bool wc: Skip auto-detection for working copies and assume given
+                    value. If auto-detection is impossible, assumes the
+                    repository is a working copy.
     :raises UnknownVCSType: if the repository type couldn't be inferred
 
     If ``vcs`` is not specified, it is inferred via :func:`probe`.
@@ -104,23 +90,75 @@ def open(path, vcs=None):
     """
     import os
     assert os.path.isdir(path), path + ' is not a directory'
-    vcs = vcs or probe(path)
-    cls = _get_repo_class(vcs)
+    vcs, wc = _resolve_guess(path, vcs, wc, True)
+    cls = _get_repo_class(vcs, wc)
     return cls(path)
 
 
-def _get_repo_class(vcs):
+def _get_repo_class(vcs, wc):
+    assert wc in (True, False)
     from .common import UnknownVCSType
     if vcs == 'git':
-        from .git import GitRepo
-        return GitRepo
+        from .git import GitRepo, GitWorkingCopy
+        return GitRepo if not wc else GitWorkingCopy
     elif vcs == 'hg':
-        from .hg import HgRepo
-        return HgRepo
+        from .hg import HgRepo, HgWorkingCopy
+        return HgRepo if not wc else HgWorkingCopy
     elif vcs == 'svn':
         from .svn import SvnRepo
+        if wc:
+            raise UnknownVCSType('%s (wc=True)' % vcs)
         return SvnRepo
     else:
         raise UnknownVCSType(vcs)
+
+
+def _probe(path):
+    import os
+    from .common import UnknownVCSType
+    if os.path.isdir(os.path.join(path, '.git')):
+        return 'git', True
+    elif os.path.isdir(os.path.join(path, '.hg')):
+        return 'hg', None
+    elif (
+        os.path.isfile(os.path.join(path, 'config')) and
+        os.path.isdir(os.path.join(path, 'objects')) and
+        os.path.isdir(os.path.join(path, 'refs')) and
+        os.path.isdir(os.path.join(path, 'branches'))
+    ):
+        return 'git', False
+    elif (
+        os.path.isfile(os.path.join(path, 'format')) and
+        os.path.isdir(os.path.join(path, 'conf')) and
+        os.path.isdir(os.path.join(path, 'db')) and
+        os.path.isdir(os.path.join(path, 'locks'))
+    ):
+        return 'svn', False
+    else:
+        raise UnknownVCSType(path)
+
+
+def _resolve_guess(path, vcs, wc, assume):
+    '''
+    Some common logic for resolving the VCS type and if the path points to a
+    working copy.
+
+    '''
+    # If the user provided both to us, just use those.
+    if not (vcs is None or wc is None):
+        return vcs, wc
+
+    # Otherwise, inspect the path and try to guess what the path is. `None`
+    # here is a valid guess for `wc` because some repository working copies are
+    # not trivially distiguishable from a normal repository. If nothing gives
+    # any certainty, use the value of `assume`.
+    vcs_guess, wc_guess = _probe(path)
+    if vcs is None:
+        vcs = vcs_guess
+    if wc is None:
+        wc = wc_guess if not wc_guess is None else assume
+
+    return vcs, wc
+
 
 # vi:set tabstop=4 softtabstop=4 shiftwidth=4 expandtab:
